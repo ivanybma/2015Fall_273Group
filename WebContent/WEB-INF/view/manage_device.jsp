@@ -10,18 +10,51 @@
 <style>
 
 #notify_result_table {
-
-width: 400px;
+width: 500px;
 }
+#group_table{
+height: 1520px;
+width: 550px;
+}
+#div_layout{
+width: 650px;
+}
+#group_layout {
+width: 550px;
+}
+
+#group_device_list, #Request_list{
+width: 330px;
+}
+
+
 
 .notify_txt {
 width: 400px;
 }
 
+#multiple_list{
+width: 150px;
+}
+
 div.rst_div {
-    width: 700px;
+    width: 630px;
     height: 100px;
     border: 3px solid #73AD21;
+    overflow: scroll;
+}
+
+#device_list_div {
+    width: 350px;
+    height: 150px;
+    border: 3px solid #73AD21;
+    overflow: scroll;
+}
+
+#request_list_div{
+    width: 350px;
+    height: 100px;
+    border: 1px solid #73AD21;
     overflow: scroll;
 }
 
@@ -36,11 +69,22 @@ select{
 table {
 border: 1px solid black;
 }
+
+#testid{
+border: 1px solid red;
+}
+
+td{
+border: 1px solid #0A1200;
+vertical-align:top;
+}
 </style>
 
 <script>
 $(document).ready(function(){
 
+	$("#delete_group").prop("disabled",true);
+	$("#add_device").prop("disabled",true);
 	
 	$("#Read").click(function(){
 		
@@ -220,14 +264,83 @@ $(document).ready(function(){
 	        $("#delete_result").html(result);
 	    }});   
 	});	
-
 	
 	
-	//alert("${devid}");
+	$("#update_active").click(function(){
+		    $.ajax({url: "http://localhost:8080/Restful_WebService/changeactivegp/${devid}/"+$("#active_gp :selected").val(), 
+	    	type: "GET",
+	    	DataType: "text",
+	    	error: function(xhr){
+	            alert("An error occured: " + xhr.status + " " + xhr.statusText);
+	        }, 
+	    	success: function(result){
+	        alert("active group changed");
+	    }}); 
+	});
+	
+	
+	$("#add_group").click(function(){
+	    $.ajax({url: "http://localhost:8080/Restful_WebService/newgroup/${devid}/"+$("#new_group").val(), 
+    	type: "GET",
+    	DataType: "text",
+    	error: function(xhr){
+            alert("An error occured: " + xhr.status + " " + xhr.statusText);
+        }, 
+    	success: function(result){
+        alert("New group added");
+    }}); 
+});
+	
+	$("#delete_group").click(function(){
+	    $.ajax({url: "http://localhost:8080/Restful_WebService/deletegroup/${devid}/"+$("#multiple_list :selected").val(), 
+    	type: "GET",
+    	DataType: "text",
+    	error: function(xhr){
+            alert("An error occured: " + xhr.status + " " + xhr.statusText);
+        }, 
+    	success: function(result){
+        alert("Group deleteded");
+        document.location.reload(true);
+    }}); 
+});
+	
+	
+	$("#multiple_list").change(function(){
+		group_info_Ajax();
+		if($("#multiple_list :selected").text().indexOf("***")>-1)
+			{
+				$("#delete_group").prop("disabled",false);
+				$("#add_device").prop("disabled",false);
+			}
+		else
+			{
+				$("#delete_group").prop("disabled",true);
+				$("#add_device").prop("disabled",true);
+			}
+	});	
+	
+	
+	$("#add_device").click(function(){
+	    $.ajax({url: "http://localhost:8080/Restful_WebService/adddevice/${devid}/"+$("#multiple_list :selected").val()+"/"+$("#new_device").val(), 
+    	type: "GET",
+    	DataType: "text",
+    	error: function(xhr){
+            alert("An error occured: " + xhr.status + " " + xhr.statusText);
+        }, 
+    	success: function(result){
+        alert(result);
+    }}); 
+});
+	
+	
+	//alert('${devid}');
 	callAjax();
 	getnotify();
+	//alert("${group_info}");
+	device_group();
 	
 
+	
 	function callAjax(){
 
 	    $.ajax({url: "http://localhost:8080/Restful_WebService/getobjrsc", 
@@ -285,9 +398,193 @@ $(document).ready(function(){
 	        });
 	};
 	
+	function group_info_Ajax(){
+	    $.ajax({url: "http://localhost:8080/Restful_WebService/gpdvlst/"+$("#multiple_list :selected").val(), 
+	    	type: "GET",
+	    	DataType: "text",
+	    	error: function(xhr){
+	            alert("An error occured: " + xhr.status + " " + xhr.statusText);
+	        }, 
+	    	success: function(result){
+	 	       	
+	 	        $("#group_device_list #dy_created").remove();
+	 	        
+	 	       var newtr="";
+                if($("#multiple_list :selected").text().indexOf("***")>-1)		
+                {
+		    	$.each($.parseJSON(result), function(idx, obj) {
+		    		
+		    		if(obj!='${devid}')
+		            {
+		    			newtr = $('<tr id="dy_created">').append(
+		                    $('<td>').append(
+		                    		$('<input type="text" style="width:255px" name='+obj+' readonly>').val(obj)	),
+		                    	$('<td>').append(
+		    	    	            $('<button type="button" style="width:50px" id='+obj+' onclick="device_delete(this.id)">Delete</button>'))          
+		                      
+		            );  
+		            }
+		    		else
+		    		{
+		    			newtr = $('<tr id="dy_created">').append(
+			                    $('<td>').append(
+			                    		$('<input type="text" style="width:255px" name='+obj+' readonly>').val(obj)	)      
+			            );  
+		    		}
+		    		 $("#group_device_list").append(newtr);
+		    	});
+	    		}
+                else
+                {
+    		    	$.each($.parseJSON(result), function(idx, obj) {
+    		          newtr = $('<tr id="dy_created">').append(
+    		                    $('<td>').append(
+    		                    		$('<input type="text" style="width:255px" name='+obj+' readonly>').val(obj)	)
+    		            );
+    		          $("#group_device_list").append(newtr);
+    		    	});	
+               	}
+                
+               
+		    	 
+	    }
+	        });
+	}; 
+	
+	
+	function device_group(){
+     	var act_dev = $.parseJSON('${group_info}').active;
+     	$.each($.parseJSON('${group_info}').list, function(idx, obj){
+     		
+     		var gp_status;
+     		gp_status = obj;
+     		
+     		$.each($.parseJSON('${gplst}'),function(idx2, obj2){
+     		if(obj2 == obj)
+     			gp_status = obj+" ***";
+     		});
+     		
+     		$("#multiple_list").append($("<option></option>").attr("value",obj).text(gp_status));
+     		if(act_dev == obj)
+     			$("#active_gp").append($("<option></option>").attr("value",obj).attr("selected", true).text(obj));
+     		else
+     			$("#active_gp").append($("<option></option>").attr("value",obj).text(obj));
+     		
+
+     	});
+     	
+     	
+     	$("#Request_list #dy_created").remove();
+     	$.each($.parseJSON('${group_info}').gprst, function(idx, obj){
+	    		
+     		if(obj.status=="")
+     			{
+     		//	alert(obj.from+" "+obj.group);
+	    			newtr = $('<tr id="dy_created">').append(
+	                    $('<td>').append(
+	    	               		$('<input type="text" style="width:80px" name='+obj.group+' readonly>').val(obj.group)),	
+	                    $('<td>').append(
+	    	    	            $('<button type="button" style="width:50px" name='+obj.from+' id='+obj.group+' onclick="accept_group(this.id,this.name)">Accept</button>')),
+	    	    	   $('<td>').append(
+	    	    	            $('<button type="button" style="width:50px" name='+obj.from+' id='+obj.group+' onclick="reject_group(this.id,this.name)">Reject</button>')),
+	    	           $('<td>').append(
+	    	                    $('<input type="text" style="width:255px" name='+obj.from+' readonly>').val(obj.from))
+	            );  
+	            
+	    		 $("#Request_list").append(newtr);
+	    		 
+     			}
+     	});
+          
+
+	}; 
+	
+	
+	function refresh_device_group(){
+		
+	    $.ajax({url: "http://localhost:8080/Restful_WebService/refreshgroup/${devid}", 
+	    	type: "GET",
+	    	DataType: "text",
+	    	error: function(xhr){
+	            alert("An error occured: " + xhr.status + " " + xhr.statusText);
+	        }, 
+	    	success: function(result){
+
+	    		$("#multiple_list #dy_created").remove();
+	         	$.each($.parseJSON(result).list, function(idx, obj){
+	         		
+	         		var gp_status;
+	         		gp_status = obj;
+	         		
+	         		$.each($.parseJSON('${gplst}'),function(idx2, obj2){
+	         		if(obj2 == obj)
+	         			gp_status = obj+" ***";
+	         		});
+	         		
+	         		$("#multiple_list").append($("<option></option>").attr("value",obj).text(gp_status));
+	         		if(act_dev == obj)
+	         			$("#active_gp").append($("<option></option>").attr("value",obj).attr("selected", true).text(obj));
+	         		else
+	         			$("#active_gp").append($("<option></option>").attr("value",obj).text(obj));
+	         		
+
+	         	});
+	    }}); 
+
+          
+
+	}; 
+
+	
 });
 
+function device_delete(id){
+	
+    $.ajax({url: "http://localhost:8080/Restful_WebService/deletedevice/${devid}/"+$("#multiple_list :selected").val()+"/"+id, 
+    	type: "GET",
+    	DataType: "text",
+    	error: function(xhr){
+            alert("An error occured: " + xhr.status + " " + xhr.statusText);
+        }, 
+    	success: function(result){
+        alert("Device deleteded");
+        document.location.reload(true);
+    }}); 
+	
+	
+}; 
 
+function accept_group(groupname, from){
+	
+    $.ajax({url: "http://localhost:8080/Restful_WebService/acceptgroup/${devid}/"+groupname+"/"+from, 
+    	type: "GET",
+    	DataType: "text",
+    	error: function(xhr){
+            alert("An error occured: " + xhr.status + " " + xhr.statusText);
+        }, 
+    	success: function(result){
+        alert("Group joined");
+        document.location.reload(true);
+    }}); 
+	
+	
+}; 
+
+function reject_group(groupname, from){
+	
+    $.ajax({url: "http://localhost:8080/Restful_WebService/rejectgroup/${devid}/"+groupname+"/"+from, 
+    	type: "GET",
+    	DataType: "text",
+    	error: function(xhr){
+            alert("An error occured: " + xhr.status + " " + xhr.statusText);
+        }, 
+    	success: function(result){
+        alert("Group rejected");
+        document.location.reload(true);
+    }}); 
+	
+	
+}; 
 
 </script>
 
@@ -296,6 +593,9 @@ $(document).ready(function(){
 
 <h3>${devid}</h3>
 
+<table id = "testid">
+<tr>
+<td>
 <div id = "div_layout">
 <table id="manage_layout">
 <tr><td><table><tr>
@@ -542,5 +842,35 @@ $(document).ready(function(){
 -->
 </table>
 </div>
+</td>
+<td>
+<div id = "group_layout"><table id = "group_table">
+<tr style="height:350px;"><td><h3>Your Groups</h3>
+<div><select id="multiple_list" size="5" >
+</select>
+<button type="button" id="delete_group" onclick="">Delete Group</button>
+</div>
+<p>Active Group--------------</p>
+<div><select style="width:150px" id="active_gp">
+<option value="disabled"></option>
+</select><button type="button" id="update_active" onclick="">Change</button></div>
+<p>-------------------------------</p>
+<div><input type="text" id="new_device"><button type="button" id="add_device" onclick="">Add Device</button></div>
+<p>-------------------------------</p>
+<div><input type="text" id="new_group"><button type="button" id="add_group" onclick="">New Group</button></div>
+</td>
+<td style="width:350px"><h3>Groups Device List</h3><div id="device_list_div"><table id="group_device_list">
+
+</table></div><p>--------Request---------</p><div id="request_list_div"><table id="Request_list">
+
+</table></div></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td></td><td></td></tr>
+
+</table></div>
+</td>
+</tr>
+</table>
+
 </body>
 </html>
